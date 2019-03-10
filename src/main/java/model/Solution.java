@@ -25,6 +25,8 @@ public class Solution {
     //! the objective values of the function
     public List<Double> objectives;
 
+    public String source;
+
 
     /**
      * This is used for non-dominated sorting and returns the dominance relation

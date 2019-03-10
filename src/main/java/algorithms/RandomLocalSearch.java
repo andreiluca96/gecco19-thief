@@ -37,7 +37,6 @@ public class RandomLocalSearch implements Algorithm {
 
         // loop while the function evaluation limit is reached
         while (true) {
-
             // either sample a random tour or use the tour provided to the algorithm
             List<Integer> pi;
             if (this.pi == null) {
@@ -57,6 +56,7 @@ public class RandomLocalSearch implements Algorithm {
 
             // evaluate for this random tour
             Solution s = problem.evaluate(pi,z, true);
+            s.source = "RANDOM";
             nds.add(s);
             ++counter;
 
@@ -80,18 +80,20 @@ public class RandomLocalSearch implements Algorithm {
 
                     // evaluate and update the non-dominated solutions
                     s = problem.evaluate(pi,z, true);
+                    s.source = "RANDOM";
                     nds.add(s);
 
                     // increase the function evaluation counter
                     ++counter;
 
                 }
+                System.out.println(counter);
 
-                if (counter == this.maxNumOfTrials) break;
+                if (counter >= this.maxNumOfTrials) break;
 
             }
 
-            if (counter == this.maxNumOfTrials) break;
+            if (counter >= this.maxNumOfTrials) break;
 
 
         }

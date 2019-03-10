@@ -1,5 +1,8 @@
 import algorithms.Algorithm;
 import algorithms.ExhaustiveSearch;
+import algorithms.JeneticAlgorithm;
+import algorithms.RandomLocalSearch;
+import model.NonDominatedSet;
 import model.Solution;
 import model.TravelingThiefProblem;
 
@@ -17,7 +20,7 @@ class Runner {
 
     public static void main(String[] args) throws IOException {
 
-        List<String> instanceToRun = Arrays.asList("test-example-n4");
+        List<String> instanceToRun = Arrays.asList("a280-n279");
         //List<String> instanceToRun = Competition.INSTANCES;
 
         for (String instance : instanceToRun) {
@@ -33,26 +36,37 @@ class Runner {
             int numOfSolutions = Competition.numberOfSolutions(problem);
 
             // initialize your algorithm
-            //Algorithm algorithm = new RandomLocalSearch(100);
-            Algorithm algorithm = new ExhaustiveSearch();
+            Algorithm randomAlgorithm = new RandomLocalSearch(500);
+            Algorithm jeneticAlgorithm = new JeneticAlgorithm();
 
             // use it to to solve the problem and return the non-dominated set
-            List<Solution> nds = algorithm.solve(problem);
+            List<Solution> nds = randomAlgorithm.solve(problem);
+            List<Solution> jds = jeneticAlgorithm.solve(problem);
+
+            NonDominatedSet ndsFinal = new NonDominatedSet();
+            nds.forEach(ndsFinal::add);
+            jds.forEach(ndsFinal::add);
+
+            List<Solution> finalSolution = ndsFinal.entries;
 
             // sort by time and printSolutions it
-            nds.sort(Comparator.comparing(a -> a.time));
+            finalSolution.sort(Comparator.comparing(a -> a.time));
+            long jeneticSolutions = finalSolution.stream().filter(solution -> solution.source.equals("JENETIC")).count();
 
-            System.out.println(nds.size());
-            for(Solution s : nds) {
-                System.out.println(s.time + " " + s.profit);
-            }
+            System.out.println(1.0 * jeneticSolutions / finalSolution.size());
 
-            Util.printSolutions(nds, true);
-            System.out.println(problem.name + " " + nds.size());
 
-            File dir = new File("results");
-            if (!dir.exists()) dir.mkdirs();
-            Util.writeSolutions("results", Competition.TEAM_NAME, problem, nds);
+//            System.out.println(finalSolution.size());
+//            for(Solution s : finalSolution) {
+//                System.out.println(s.time + " " + s.profit);
+//            }
+//
+//            Util.printSolutions(finalSolution, true);
+//            System.out.println(problem.name + " " + finalSolution.size());
+//
+//            File dir = new File("results");
+//            if (!dir.exists()) dir.mkdirs();
+//            Util.writeSolutions("results", "TEAM_JENETICS", problem, finalSolution);
 
 
         }

@@ -46,7 +46,7 @@ public abstract class Util {
             varBw.write("\n");
 
             // write into the objective file
-            objBw.write(String.format("%.16f %.16f", solution.time, solution.profit) + "\n");
+            objBw.write(String.format("%.16f %.16f %s", solution.time, solution.profit, solution.source) + "\n");
 
         }
 
