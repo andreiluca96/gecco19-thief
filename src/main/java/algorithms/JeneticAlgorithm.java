@@ -1,6 +1,12 @@
 package algorithms;
 
-import io.jenetics.*;
+import io.jenetics.BitChromosome;
+import io.jenetics.BitGene;
+import io.jenetics.Chromosome;
+import io.jenetics.EnumGene;
+import io.jenetics.Genotype;
+import io.jenetics.PermutationChromosome;
+import io.jenetics.Phenotype;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
 import model.NonDominatedSet;
@@ -10,21 +16,13 @@ import model.TravelingThiefProblem;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.jenetics.engine.Limits.bySteadyFitness;
-
+@SuppressWarnings("unchecked")
 public class JeneticAlgorithm implements Algorithm {
 
     private TravelingThiefProblem problem;
 
     private double fitness(final Genotype gt) {
-        final PermutationChromosome dc = (PermutationChromosome) gt.getChromosome(0);
-        final BitChromosome bc = (BitChromosome) gt.getChromosome(1);
-
-        List<Integer> permutationGenes = (List<Integer>) dc.stream().map(gene -> ((EnumGene) gene).getAlleleIndex()).collect(Collectors.toList());
-        permutationGenes = permutationGenes.stream().map(integer -> integer + 1).collect(Collectors.toList());
-        permutationGenes.add(0, 0);
-        List<Boolean> booleanGenes = bc.stream().map(bitGene -> bitGene.booleanValue()).collect(Collectors.toList());
-        Solution solution = problem.evaluate(permutationGenes, booleanGenes);
+        Solution solution = getSolutionFromGenotype(gt);
 
         if (solution.profit == -Double.MAX_VALUE || solution.time == Double.MAX_VALUE)
             return Double.MIN_VALUE;
@@ -37,17 +35,17 @@ public class JeneticAlgorithm implements Algorithm {
         this.problem = problem;
 
         Genotype encoding = Genotype.of(
-                (Chromosome) PermutationChromosome.ofInteger(problem.numOfCities - 1),
-                (Chromosome) BitChromosome.of(problem.numOfItems, 0.1)
+                PermutationChromosome.ofInteger(problem.numOfCities - 1),
+                (Chromosome) BitChromosome.of(problem.numOfItems, 0.05)
         );
 
         final Engine engine = Engine
                 .builder(this::fitness, encoding)
-                .populationSize(1_000)
+                .populationSize(250)
                 .build();
 
         final List<EvolutionResult> genotypes = (List<EvolutionResult>) engine.stream()
-                .limit(bySteadyFitness(1000))
+                .limit(500)
                 .collect(Collectors.toList());
 
         List<Solution> solutions = genotypes.stream()
@@ -71,8 +69,7 @@ public class JeneticAlgorithm implements Algorithm {
         final BitChromosome bc = (BitChromosome) genotype.getChromosome(1);
 
         List<Integer> permutationGenes = (List<Integer>) dc.stream().map(gene -> ((EnumGene) gene).getAlleleIndex()).collect(Collectors.toList());
-        List<Boolean> booleanGenes = bc.stream().map(bitGene -> bitGene.booleanValue()).collect(Collectors.toList());
-
+        List<Boolean> booleanGenes = bc.stream().map(BitGene::booleanValue).collect(Collectors.toList());
 
         permutationGenes = permutationGenes.stream().map(integer -> integer + 1).collect(Collectors.toList());
         permutationGenes.add(0, 0);

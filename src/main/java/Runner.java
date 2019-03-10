@@ -1,17 +1,17 @@
 import algorithms.Algorithm;
-import algorithms.ExhaustiveSearch;
 import algorithms.JeneticAlgorithm;
 import algorithms.RandomLocalSearch;
+import com.google.common.collect.Lists;
 import model.NonDominatedSet;
 import model.Solution;
 import model.TravelingThiefProblem;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 class Runner {
 
@@ -23,55 +23,65 @@ class Runner {
         List<String> instanceToRun = Arrays.asList("a280-n279");
         //List<String> instanceToRun = Competition.INSTANCES;
 
-        for (String instance : instanceToRun) {
+        List<Double> solutions = Lists.newArrayList();
 
-            // readProblem the problem from the file
-            String fname = String.format("resources/%s.txt", instance);
-            InputStream is = LOADER.getResourceAsStream(fname);
+        int numberOfIterations = 100;
+        for (int i = 0; i < numberOfIterations; i++) {
+            for (String instance : instanceToRun) {
 
-            TravelingThiefProblem problem = Util.readProblem(is);
-            problem.name = instance;
+                // readProblem the problem from the file
+                String fname = String.format("resources/%s.txt", instance);
+                InputStream is = LOADER.getResourceAsStream(fname);
 
-            // number of solutions that will be finally necessary for submission - not used here
-            int numOfSolutions = Competition.numberOfSolutions(problem);
+                TravelingThiefProblem problem = Util.readProblem(is);
+                problem.name = instance;
 
-            // initialize your algorithm
-            Algorithm randomAlgorithm = new RandomLocalSearch(500);
-            Algorithm jeneticAlgorithm = new JeneticAlgorithm();
+                // number of solutions that will be finally necessary for submission - not used here
+                int numOfSolutions = Competition.numberOfSolutions(problem);
 
-            // use it to to solve the problem and return the non-dominated set
-            List<Solution> nds = randomAlgorithm.solve(problem);
-            List<Solution> jds = jeneticAlgorithm.solve(problem);
+                // initialize your algorithm
+                Algorithm randomAlgorithm = new RandomLocalSearch(500);
+                Algorithm jeneticAlgorithm = new JeneticAlgorithm();
 
-            NonDominatedSet ndsFinal = new NonDominatedSet();
-            nds.forEach(ndsFinal::add);
-            jds.forEach(ndsFinal::add);
+                // use it to to solve the problem and return the non-dominated set
+                List<Solution> nds = randomAlgorithm.solve(problem);
+                List<Solution> jds = jeneticAlgorithm.solve(problem);
 
-            List<Solution> finalSolution = ndsFinal.entries;
+                NonDominatedSet ndsFinal = new NonDominatedSet();
+                nds.forEach(ndsFinal::add);
+                jds.forEach(ndsFinal::add);
 
-            // sort by time and printSolutions it
-            finalSolution.sort(Comparator.comparing(a -> a.time));
-            long jeneticSolutions = finalSolution.stream().filter(solution -> solution.source.equals("JENETIC")).count();
+                List<Solution> finalSolution = ndsFinal.entries;
 
-            System.out.println(1.0 * jeneticSolutions / finalSolution.size());
+                // sort by time and printSolutions it
+                finalSolution.sort(Comparator.comparing(a -> a.time));
+                long jeneticSolutions = finalSolution.stream().filter(solution -> solution.source.equals("JENETIC")).count();
 
-
-//            System.out.println(finalSolution.size());
-//            for(Solution s : finalSolution) {
-//                System.out.println(s.time + " " + s.profit);
-//            }
-//
-//            Util.printSolutions(finalSolution, true);
-//            System.out.println(problem.name + " " + finalSolution.size());
-//
-//            File dir = new File("results");
-//            if (!dir.exists()) dir.mkdirs();
-//            Util.writeSolutions("results", "TEAM_JENETICS", problem, finalSolution);
-
-
+                double solutionPercentage = 1.0 * jeneticSolutions / finalSolution.size();
+                solutions.add(solutionPercentage);
+                System.out.printf("%d %f\n", i, solutionPercentage);
+                //            System.out.println(finalSolution.size());
+                //            for(Solution s : finalSolution) {
+                //                System.out.println(s.time + " " + s.profit);
+                //            }
+                //
+                //            Util.printSolutions(finalSolution, true);
+                //            System.out.println(problem.name + " " + finalSolution.size());
+                //
+                //            File dir = new File("results");
+                //            if (!dir.exists()) dir.mkdirs();
+                //            Util.writeSolutions("results", "TEAM_JENETICS", problem, finalSolution);
+            }
         }
 
+        Optional<Double> max = solutions.stream().max(Double::compareTo);
+        Optional<Double> min = solutions.stream().min(Double::compareTo);
+        int count = solutions.size();
+        Optional<Double> sum = solutions.stream().reduce(Double::sum);
 
+        System.out.printf("Maximum: %f\n", max.get());
+        System.out.printf("Minimum: %f\n", min.get());
+        System.out.printf("Avg: %f\n", sum.get() / count);
 
     }
 

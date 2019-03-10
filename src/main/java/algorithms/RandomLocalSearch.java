@@ -87,7 +87,6 @@ public class RandomLocalSearch implements Algorithm {
                     ++counter;
 
                 }
-                System.out.println(counter);
 
                 if (counter >= this.maxNumOfTrials) break;
 
