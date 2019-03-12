@@ -1,14 +1,9 @@
 package algorithms;
 
-import io.jenetics.BitChromosome;
-import io.jenetics.BitGene;
-import io.jenetics.Chromosome;
-import io.jenetics.EnumGene;
-import io.jenetics.Genotype;
-import io.jenetics.PermutationChromosome;
-import io.jenetics.Phenotype;
+import io.jenetics.*;
 import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
+import io.jenetics.engine.EvolutionStatistics;
 import model.NonDominatedSet;
 import model.Solution;
 import model.TravelingThiefProblem;
@@ -24,10 +19,7 @@ public class JeneticAlgorithm implements Algorithm {
     private double fitness(final Genotype gt) {
         Solution solution = getSolutionFromGenotype(gt);
 
-        if (solution.profit == -Double.MAX_VALUE || solution.time == Double.MAX_VALUE)
-            return Double.MIN_VALUE;
-
-        return solution.profit -  solution.time;
+        return solution.profit / (solution.time + 1);
     }
 
     @Override
@@ -39,19 +31,32 @@ public class JeneticAlgorithm implements Algorithm {
                 (Chromosome) BitChromosome.of(problem.numOfItems, 0.05)
         );
 
+        final EvolutionStatistics statistics = EvolutionStatistics.ofComparable();
+
         final Engine engine = Engine
                 .builder(this::fitness, encoding)
-                .populationSize(250)
+                .optimize(Optimize.MAXIMUM)
+                .maximalPhenotypeAge(5)
+                .alterers(new Mutator<>(0.001), new UniformCrossover(0.3))
+                .populationSize(900)
                 .build();
 
         final List<EvolutionResult> genotypes = (List<EvolutionResult>) engine.stream()
-                .limit(500)
+                .limit(100)
+                .peek(statistics)
+                .peek(o -> {
+                    EvolutionResult intermediateResult = (EvolutionResult) o;
+
+                    System.out.println("## Generation: " + intermediateResult.getGeneration());
+                    System.out.println("## Best: " + intermediateResult.getBestFitness());
+                    System.out.println("## Worst: " + intermediateResult.getWorstFitness());
+                })
                 .collect(Collectors.toList());
 
         List<Solution> solutions = genotypes.stream()
                 .map(evolutionResult -> (List<Solution>) evolutionResult.getPopulation()
                         .stream()
-                        .map(o -> ((Phenotype)o).getGenotype())
+                        .map(o -> ((Phenotype) o).getGenotype())
                         .map(o -> getSolutionFromGenotype((Genotype) o))
                         .collect(Collectors.toList()))
                 .flatMap(List::stream)

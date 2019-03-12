@@ -40,7 +40,7 @@ class Runner {
                 int numOfSolutions = Competition.numberOfSolutions(problem);
 
                 // initialize your algorithm
-                Algorithm randomAlgorithm = new RandomLocalSearch(500);
+                Algorithm randomAlgorithm = new RandomLocalSearch(2000);
                 Algorithm jeneticAlgorithm = new JeneticAlgorithm();
 
                 // use it to to solve the problem and return the non-dominated set
