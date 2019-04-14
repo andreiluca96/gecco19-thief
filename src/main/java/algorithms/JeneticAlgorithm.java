@@ -2,8 +2,11 @@ package algorithms;
 
 import io.jenetics.*;
 import io.jenetics.engine.Engine;
-import io.jenetics.engine.EvolutionResult;
-import io.jenetics.engine.EvolutionStatistics;
+import io.jenetics.ext.moea.MOEA;
+import io.jenetics.ext.moea.UFTournamentSelector;
+import io.jenetics.ext.moea.Vec;
+import io.jenetics.util.ISeq;
+import io.jenetics.util.IntRange;
 import model.NonDominatedSet;
 import model.Solution;
 import model.TravelingThiefProblem;
@@ -16,10 +19,10 @@ public class JeneticAlgorithm implements Algorithm {
 
     private TravelingThiefProblem problem;
 
-    private double fitness(final Genotype gt) {
+    private Vec<double[]> fitness(final Genotype gt) {
         Solution solution = getSolutionFromGenotype(gt);
 
-        return solution.profit / (solution.time + 1);
+        return Vec.of(solution.profit, -solution.time);
     }
 
     @Override
@@ -31,42 +34,29 @@ public class JeneticAlgorithm implements Algorithm {
                 (Chromosome) BitChromosome.of(problem.numOfItems, 0.05)
         );
 
-        final EvolutionStatistics statistics = EvolutionStatistics.ofComparable();
-
         final Engine engine = Engine
                 .builder(this::fitness, encoding)
                 .optimize(Optimize.MAXIMUM)
                 .maximalPhenotypeAge(5)
-                .alterers(new Mutator<>(0.001), new UniformCrossover(0.3))
-                .populationSize(900)
+                .alterers(new Mutator(0.01), new UniformCrossover(0.03))
+                .populationSize(700)
+                .offspringSelector(new TournamentSelector<>(4))
+                .survivorsSelector(UFTournamentSelector.ofVec())
                 .build();
 
-        final List<EvolutionResult> genotypes = (List<EvolutionResult>) engine.stream()
-                .limit(100)
-                .peek(statistics)
-                .peek(o -> {
-                    EvolutionResult intermediateResult = (EvolutionResult) o;
-
-                    System.out.println("## Generation: " + intermediateResult.getGeneration());
-                    System.out.println("## Best: " + intermediateResult.getBestFitness());
-                    System.out.println("## Worst: " + intermediateResult.getWorstFitness());
-                })
-                .collect(Collectors.toList());
+        final ISeq<Phenotype> genotypes = (ISeq<Phenotype>) engine.stream()
+                .limit(300)
+                .collect(MOEA.toParetoSet(IntRange.of(200)));
 
         List<Solution> solutions = genotypes.stream()
-                .map(evolutionResult -> (List<Solution>) evolutionResult.getPopulation()
-                        .stream()
-                        .map(o -> ((Phenotype) o).getGenotype())
-                        .map(o -> getSolutionFromGenotype((Genotype) o))
-                        .collect(Collectors.toList()))
-                .flatMap(List::stream)
+                .map(Phenotype::getGenotype)
+                .map(this::getSolutionFromGenotype)
                 .peek(solution -> solution.source = "JENETIC")
                 .collect(Collectors.toList());
         NonDominatedSet nonDominatedSet = new NonDominatedSet();
         solutions.forEach(nonDominatedSet::add);
 
         return nonDominatedSet.entries;
-
     }
 
     private Solution getSolutionFromGenotype(Genotype genotype) {

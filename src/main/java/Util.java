@@ -57,6 +57,12 @@ public abstract class Util {
 
     }
 
+    public static void writeSolutionsForVisualization(List<Solution> solutions) {
+        for (Solution solution : solutions) {
+            System.out.println(String.format("%.2f %.2f %s", solution.time, solution.profit, solution.source));
+        }
+    }
+
 
 
     public static void printSolutions(List<Solution> solutions, boolean printVariable) {
